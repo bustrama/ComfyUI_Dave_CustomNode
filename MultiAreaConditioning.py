@@ -2,7 +2,9 @@
 # 02/04/2023
 
 import torch
+
 from nodes import MAX_RESOLUTION
+
 
 class MultiAreaConditioning:
     def __init__(self) -> None:
@@ -12,13 +14,11 @@ class MultiAreaConditioning:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "conditioning0": ("CONDITIONING", ),
-                "conditioning1": ("CONDITIONING", )
+                "conditioning0": ("CONDITIONING",),
+                "conditioning1": ("CONDITIONING",)
             },
             "hidden": {"extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
         }
-    
-
 
     RETURN_TYPES = ("CONDITIONING", "INT", "INT")
     RETURN_NAMES = (None, "resolutionX", "resolutionY")
@@ -42,7 +42,7 @@ class MultiAreaConditioning:
         for arg in kwargs:
             if k > len(values): break;
             if not torch.is_tensor(kwargs[arg][0][0]): continue;
-            
+
             x, y = values[k][0], values[k][1]
             w, h = values[k][2], values[k][3]
 
@@ -52,12 +52,12 @@ class MultiAreaConditioning:
                     c.append(t)
                 k += 1
                 continue
-            
-            if x+w > resolutionX:
-                w = max(0, resolutionX-x)
-            
-            if y+h > resolutionY:
-                h = max(0, resolutionY-y)
+
+            if x + w > resolutionX:
+                w = max(0, resolutionX - x)
+
+            if y + h > resolutionY:
+                h = max(0, resolutionY - y)
 
             if w == 0 or h == 0: continue;
 
@@ -67,13 +67,13 @@ class MultiAreaConditioning:
                 n[1]['strength'] = values[k][4]
                 n[1]['min_sigma'] = 0.0
                 n[1]['max_sigma'] = 99.0
-                
+
                 c.append(n)
-            
+
             k += 1
-            
-        
+
         return (c, resolutionX, resolutionY)
+
 
 class ConditioningUpscale():
     def __init__(self) -> None:
@@ -83,11 +83,11 @@ class ConditioningUpscale():
     def INPUT_TYPES(s):
         return {
             "required": {
-                "conditioning": ("CONDITIONING", ),
+                "conditioning": ("CONDITIONING",),
                 "scalar": ("INT", {"default": 2, "min": 1, "max": 100, "step": 0.5}),
             },
         }
-    
+
     RETURN_TYPES = ("CONDITIONING",)
     CATEGORY = "Davemane42"
 
@@ -99,13 +99,13 @@ class ConditioningUpscale():
 
             n = [t[0], t[1].copy()]
             if 'area' in n[1]:
-                
-                n[1]['area'] = tuple(map(lambda x: ((x*scalar + 7) >> 3) << 3, n[1]['area']))
+                n[1]['area'] = tuple(map(lambda x: ((x * scalar + 7) >> 3) << 3, n[1]['area']))
 
             c.append(n)
 
-        return (c, )
-    
+        return (c,)
+
+
 class ConditioningStretch():
     def __init__(self) -> None:
         pass
@@ -114,15 +114,15 @@ class ConditioningStretch():
     def INPUT_TYPES(s):
         return {
             "required": {
-                "conditioning": ("CONDITIONING", ),
+                "conditioning": ("CONDITIONING",),
                 "resolutionX": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                 "resolutionY": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                 "newWidth": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                 "newHeight": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
-                #"scalar": ("INT", {"default": 2, "min": 1, "max": 100, "step": 0.5}),
+                # "scalar": ("INT", {"default": 2, "min": 1, "max": 100, "step": 0.5}),
             },
         }
-    
+
     RETURN_TYPES = ("CONDITIONING",)
     CATEGORY = "Davemane42"
 
@@ -134,21 +134,21 @@ class ConditioningStretch():
 
             n = [t[0], t[1].copy()]
             if 'area' in n[1]:
-
                 newWidth *= scalar
                 newHeight *= scalar
-                
-                #n[1]['area'] = tuple(map(lambda x: ((x*scalar + 32) >> 6) << 6, n[1]['area']))
-                x = ((n[1]['area'][3]*8)*newWidth/resolutionX) // 8
-                y = ((n[1]['area'][2]*8)*newHeight/resolutionY) // 8
-                w = ((n[1]['area'][1]*8)*newWidth/resolutionX) // 8
-                h = ((n[1]['area'][0]*8)*newHeight/resolutionY) // 8
+
+                # n[1]['area'] = tuple(map(lambda x: ((x*scalar + 32) >> 6) << 6, n[1]['area']))
+                x = ((n[1]['area'][3] * 8) * newWidth / resolutionX) // 8
+                y = ((n[1]['area'][2] * 8) * newHeight / resolutionY) // 8
+                w = ((n[1]['area'][1] * 8) * newWidth / resolutionX) // 8
+                h = ((n[1]['area'][0] * 8) * newHeight / resolutionY) // 8
 
                 n[1]['area'] = tuple(map(lambda x: (((int(x) + 7) >> 3) << 3), [h, w, y, x]))
 
             c.append(n)
 
-        return (c, )
+        return (c,)
+
 
 class ConditioningDebug():
     def __init__(self) -> None:
@@ -158,10 +158,10 @@ class ConditioningDebug():
     def INPUT_TYPES(s):
         return {
             "required": {
-                "conditioning": ("CONDITIONING", ),
+                "conditioning": ("CONDITIONING",),
             }
         }
-    
+
     RETURN_TYPES = ()
     FUNCTION = "debug"
 
@@ -174,8 +174,9 @@ class ConditioningDebug():
         for i, t in enumerate(conditioning):
             print(f"{i}:")
             if "area" in t[1]:
-                print(f"\tx{t[1]['area'][3]*8} y{t[1]['area'][2]*8} \n\tw{t[1]['area'][1]*8} h{t[1]['area'][0]*8} \n\tstrength: {t[1]['strength']}")
+                print(
+                    f"\tx{t[1]['area'][3] * 8} y{t[1]['area'][2] * 8} \n\tw{t[1]['area'][1] * 8} h{t[1]['area'][0] * 8} \n\tstrength: {t[1]['strength']}")
             else:
                 print(f"\tFullscreen")
 
-        return (None, )
+        return (None,)
